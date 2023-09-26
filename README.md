@@ -2,6 +2,7 @@
 This is a demo of [passkey-rs](https://github.com/1Password/passkey-rs).
 
 # Development
+## Server
 Create TLS certicates at localhost.
 ```
 mkdir server/certs && cd server/certs
@@ -13,4 +14,11 @@ Then run server.
 ```
 cd server
 cargo run
+```
+
+## Client
+Build wasm library.
+```
+cd client
+wasm-pack build -t nodejs
 ```
