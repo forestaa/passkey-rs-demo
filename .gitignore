@@ -4,3 +4,5 @@ Cargo.lock
 bin/
 client/pkg/
 client/wasm-pack.log
+server/certs
+node_modules

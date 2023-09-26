@@ -1,7 +1,21 @@
 [package]
 name = "passkey-demo-server"
 version = "0.1.0"
-authors = ["forestaa <t.daichi.3@gmail.com>"]
-edition = "2021"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
 
 [dependencies]
+actix-web = { version = "4.4.0", features = ["rustls"] }
+actix-session = "0.8.0"
+actix-identity = "0.6.0"
+once_cell = "1.18.0"
+async-trait = "0.1"
+anyhow = "1.0.75"
+rand = "0.8.5"
+webauthn-rs = { version = "0.4.8", features = ["danger-allow-state-serialisation"] }
+env_logger = "0.10.0"
+log = "0.4.20"
+uuid = {version = "1.4.1",features = ["v4", "fast-rng", "macro-diagnostics"] }
+rustls = "0.20.9"
+rustls-pemfile = "1.0.3"
