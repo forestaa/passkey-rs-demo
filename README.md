@@ -22,3 +22,9 @@ Build wasm library.
 cd client
 wasm-pack build -t nodejs
 ```
+
+Then run cli.
+```
+cd cli
+NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem" npx ts-node main.ts
+```
