@@ -45,15 +45,32 @@ static CLIENT: Lazy<
 });
 
 #[wasm_bindgen]
-pub async fn register(url: String, credential_creation_options: JsValue) -> PublicKeyCredential {
+pub async fn register(origin: String, credential_creation_options: JsValue) -> PublicKeyCredential {
     utils::set_panic_hook();
-    let url = Url::parse(&url).unwrap();
+    let origin = Url::parse(&origin).unwrap();
     let credential_creation_options =
         serde_wasm_bindgen::from_value(credential_creation_options).unwrap();
     let public_key = CLIENT
         .lock()
         .unwrap()
-        .register(&url, credential_creation_options)
+        .register(&origin, credential_creation_options)
+        .await
+        .unwrap();
+    PublicKeyCredential::from(serde_wasm_bindgen::to_value(&public_key).unwrap())
+}
+
+#[wasm_bindgen]
+pub async fn authenticate(
+    origin: String,
+    credential_request_options: JsValue,
+) -> PublicKeyCredential {
+    let origin = Url::parse(&origin).unwrap();
+    let credential_request_options =
+        serde_wasm_bindgen::from_value(credential_request_options).unwrap();
+    let public_key = CLIENT
+        .lock()
+        .unwrap()
+        .authenticate(&origin, credential_request_options, None)
         .await
         .unwrap();
     PublicKeyCredential::from(serde_wasm_bindgen::to_value(&public_key).unwrap())

@@ -30,6 +30,7 @@ pub(crate) struct UserRepository(RwLock<UserRepositoryBody>);
 
 struct UserRepositoryBody {
     users: HashMap<Uuid, User>,
+    email_index: HashMap<String, Uuid>,
     passkey_index: HashMap<CredentialID, Uuid>,
 }
 
@@ -37,13 +38,19 @@ impl UserRepository {
     pub(crate) fn new() -> Self {
         Self(RwLock::new(UserRepositoryBody {
             users: HashMap::new(),
+            email_index: HashMap::new(),
             passkey_index: HashMap::new(),
         }))
     }
 
     pub(crate) fn save_user(&self, user: User) {
         let mut wlock = self.0.write().unwrap();
+
+        // TODO: conflict handling
+        wlock.email_index.insert(user.email.clone(), user.id);
+
         if let Some(ref passkey) = user.passkey {
+            // TODO: conflict handling
             wlock.passkey_index.remove(passkey.cred_id());
             wlock
                 .passkey_index
@@ -54,6 +61,15 @@ impl UserRepository {
 
     pub(crate) fn fetch_user(&self, user_id: &Uuid) -> Option<User> {
         self.0.read().unwrap().users.get(user_id).cloned()
+    }
+
+    pub(crate) fn fetch_user_by_email(&self, email: &str) -> Option<User> {
+        let rlock = self.0.read().unwrap();
+        rlock
+            .email_index
+            .get(email)
+            .and_then(|user_id| rlock.users.get(user_id))
+            .cloned()
     }
 
     pub(crate) fn fetch_user_by_passkey(&self, credential_id: &CredentialID) -> Option<User> {

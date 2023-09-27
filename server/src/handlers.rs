@@ -8,7 +8,8 @@ use actix_web::{
 };
 use webauthn_rs::{
     prelude::{
-        CreationChallengeResponse, PasskeyRegistration, RegisterPublicKeyCredential, Url, Uuid,
+        CreationChallengeResponse, Passkey, PasskeyRegistration, PublicKeyCredential,
+        RegisterPublicKeyCredential, Url, Uuid,
     },
     Webauthn, WebauthnBuilder,
 };
@@ -97,10 +98,62 @@ pub(crate) async fn finish_passkey_registration(
     HttpResponse::Created()
 }
 
-// async fn start_passkey_authentication(app: Application) -> impl Responder {
-//     let result  = app.web_authn.start_passkey_authentication(creds)
-// }
+#[post("/logout")]
+async fn logout(identity: Identity) -> impl Responder {
+    identity.logout();
 
-// async fn finish_passkey_authentication(app: Application) -> impl Responder {
-//     let reulst = app.webauthn.finish_passkey_authentication(reg, state)
-// }
+    HttpResponse::Ok()
+}
+
+#[post("/passkey/authenticate/start")]
+async fn start_passkey_authentication(
+    session: Session,
+    application: Data<Application>,
+    email: String,
+) -> impl Responder {
+    let user = application
+        .user_repository
+        .fetch_user_by_email(&email)
+        .unwrap();
+
+    let allow_credentials: Vec<Passkey> = user.get_passkey().cloned().into_iter().collect();
+
+    let (rcr, state) = application
+        .webauthn
+        .start_passkey_authentication(&allow_credentials)
+        .unwrap();
+
+    session
+        .insert("passkey_authentication_state", state)
+        .unwrap();
+
+    Json(rcr)
+}
+
+#[post("/passkey/authenticate/finish")]
+async fn finish_passkey_authentication(
+    session: Session,
+    application: Data<Application>,
+    request: HttpRequest,
+    req: Json<PublicKeyCredential>,
+) -> impl Responder {
+    let state = session
+        .get("passkey_authentication_state")
+        .unwrap()
+        .unwrap();
+
+    let result = application
+        .webauthn
+        .finish_passkey_authentication(&req, &state)
+        .unwrap();
+
+    if let Some(user) = application
+        .user_repository
+        .fetch_user_by_passkey(result.cred_id())
+    {
+        Identity::login(&request.extensions(), user.id.to_string()).unwrap();
+        HttpResponse::Ok()
+    } else {
+        HttpResponse::NotFound()
+    }
+}

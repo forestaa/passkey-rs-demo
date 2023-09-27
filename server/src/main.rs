@@ -1,6 +1,7 @@
 use crate::{
     handlers::{
-        finish_passkey_registration, register_user, start_passkey_registration, Application,
+        finish_passkey_authentication, finish_passkey_registration, logout, register_user,
+        start_passkey_authentication, start_passkey_registration, Application,
     },
     session::InMemorySessionStore,
 };
@@ -39,6 +40,9 @@ async fn main() -> std::io::Result<()> {
             .service(register_user)
             .service(start_passkey_registration)
             .service(finish_passkey_registration)
+            .service(start_passkey_authentication)
+            .service(finish_passkey_authentication)
+            .service(logout)
     })
     .bind_rustls("passkey-demo.localhost:8081", server_config)?
     .run()
